@@ -1,0 +1,72 @@
+# Temporal Helm values — chart 1.6.0+ (no top-level cassandra/mysql keys)
+# Server 1.31.x matches qademo-platform-aks discovery.
+
+server:
+  image:
+    tag: 1.31.1
+  setConfigFilePath: true
+  configMapsToMount: sprig
+  replicaCount: 1
+  frontend:
+    replicaCount: 1
+    service:
+      type: NodePort
+      port: 7233
+      nodePort: 30233
+  history:
+    replicaCount: 1
+  matching:
+    replicaCount: 1
+  worker:
+    replicaCount: 1
+  config:
+    namespaces:
+      create: true
+      namespace:
+        - name: default
+          retention: 3d
+    numHistoryShards: 4
+    persistence:
+      defaultStore: default
+      visibilityStore: visibility
+      datastores:
+        default:
+          sql:
+            pluginName: postgres12
+            driverName: postgres12
+            databaseName: temporal
+            connectAddr: temporal-postgresql.temporal.svc.cluster.local:5432
+            connectProtocol: tcp
+            user: temporal
+            password: temporal
+            maxConns: 10
+            maxIdleConns: 5
+            maxConnLifetime: 1h
+        visibility:
+          sql:
+            pluginName: postgres12
+            driverName: postgres12
+            databaseName: temporal_visibility
+            connectAddr: temporal-postgresql.temporal.svc.cluster.local:5432
+            connectProtocol: tcp
+            user: temporal
+            password: temporal
+            maxConns: 5
+            maxIdleConns: 2
+            maxConnLifetime: 1h
+
+web:
+  enabled: true
+  image:
+    tag: 2.51.1
+  service:
+    type: NodePort
+    port: 8080
+    nodePort: 30080
+
+shims:
+  dockerize: false
+  elasticsearchTool: false
+
+schema:
+  useHelmHooks: true

@@ -1,0 +1,16 @@
+# Local Kind Temporal POC
+#
+# Ignore local env / editor noise. Never commit real Azure credentials.
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+*.log
+.idea/
+.vscode/
+*.swp

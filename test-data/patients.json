@@ -1,0 +1,47 @@
+[
+  {
+    "patient_id": "PAT-10001",
+    "first_name": "John",
+    "last_name": "Example",
+    "dob": "1985-04-12",
+    "encounter_id": "ENC-10001",
+    "diagnosis": "EXAMPLE-DIAGNOSIS",
+    "source": "local-demo"
+  },
+  {
+    "patient_id": "PAT-10002",
+    "first_name": "Jane",
+    "last_name": "Sample",
+    "dob": "1990-07-22",
+    "encounter_id": "ENC-10002",
+    "diagnosis": "EXAMPLE-CONDITION",
+    "source": "local-demo"
+  },
+  {
+    "patient_id": "PAT-10003",
+    "first_name": "Alex",
+    "last_name": "Demo",
+    "dob": "1978-11-03",
+    "encounter_id": "ENC-10003",
+    "diagnosis": "EXAMPLE-REVIEW",
+    "source": "local-demo"
+  },
+  {
+    "patient_id": "PAT-10004",
+    "first_name": "Sam",
+    "last_name": "Test",
+    "dob": "2001-01-15",
+    "encounter_id": "ENC-10004",
+    "diagnosis": "EXAMPLE-SCREEN",
+    "source": "local-demo"
+  },
+  {
+    "patient_id": "PAT-10005",
+    "first_name": "Riley",
+    "last_name": "Synthetic",
+    "dob": "1965-09-30",
+    "encounter_id": "ENC-10005",
+    "diagnosis": "EXAMPLE-FOLLOWUP",
+    "source": "local-demo"
+  }
+]

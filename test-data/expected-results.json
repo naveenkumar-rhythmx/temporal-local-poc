@@ -1,0 +1,52 @@
+{
+  "PAT-10001": {
+    "patient_id": "PAT-10001",
+    "display_name": "John Example",
+    "status": "processed",
+    "format_version": "v1",
+    "summary": {
+      "diagnosis": "EXAMPLE-DIAGNOSIS",
+      "encounter_id": "ENC-10001"
+    }
+  },
+  "PAT-10002": {
+    "patient_id": "PAT-10002",
+    "display_name": "Jane Sample",
+    "status": "processed",
+    "format_version": "v1",
+    "summary": {
+      "diagnosis": "EXAMPLE-CONDITION",
+      "encounter_id": "ENC-10002"
+    }
+  },
+  "PAT-10003": {
+    "patient_id": "PAT-10003",
+    "display_name": "Alex Demo",
+    "status": "processed",
+    "format_version": "v1",
+    "summary": {
+      "diagnosis": "EXAMPLE-REVIEW",
+      "encounter_id": "ENC-10003"
+    }
+  },
+  "PAT-10004": {
+    "patient_id": "PAT-10004",
+    "display_name": "Sam Test",
+    "status": "processed",
+    "format_version": "v1",
+    "summary": {
+      "diagnosis": "EXAMPLE-SCREEN",
+      "encounter_id": "ENC-10004"
+    }
+  },
+  "PAT-10005": {
+    "patient_id": "PAT-10005",
+    "display_name": "Riley Synthetic",
+    "status": "processed",
+    "format_version": "v1",
+    "summary": {
+      "diagnosis": "EXAMPLE-FOLLOWUP",
+      "encounter_id": "ENC-10005"
+    }
+  }
+}

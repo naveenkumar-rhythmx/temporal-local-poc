@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: patient-data-worker
+  namespace: temporal-workers
+  labels:
+    app: patient-data-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: patient-data-worker
+  template:
+    metadata:
+      labels:
+        app: patient-data-worker
+    spec:
+      containers:
+        - name: worker
+          image: temporal-local/patient-worker:local
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: patient-data-worker-config
+            - secretRef:
+                name: application-secret
+          readinessProbe:
+            exec:
+              command: ["python", "-c", "import sys; sys.exit(0)"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["python", "-c", "import sys; sys.exit(0)"]
+            initialDelaySeconds: 20
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: patient-data-worker-config
+  namespace: temporal-workers
+data:
+  TEMPORAL_ADDRESS: temporal-frontend.temporal.svc.cluster.local:7233
+  TEMPORAL_NAMESPACE: default
+  DATABASE_URL: postgresql://patient_app:local-only-change-me@app-postgres.patient-data-services.svc.cluster.local:5432/patient_db
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: application-secret
+  namespace: temporal-workers
+type: Opaque
+stringData:
+  # LOCAL ONLY — do not use in production
+  PLACEHOLDER: local-demo
