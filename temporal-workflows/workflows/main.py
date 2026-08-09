@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import uuid
+from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -19,15 +20,33 @@ class StartWorkflowRequest(BaseModel):
     first_name: str
     last_name: str
     dob: str
+    mrn: str | None = None
+    gender: str | None = None
     encounter_id: str | None = None
     diagnosis: str | None = None
     source: str = "local-demo"
+    conditions: list[dict[str, Any]] = Field(default_factory=list)
+    medications: list[dict[str, Any]] = Field(default_factory=list)
+    allergies: list[dict[str, Any]] = Field(default_factory=list)
+    labs: list[dict[str, Any]] = Field(default_factory=list)
+    vitals: list[dict[str, Any]] = Field(default_factory=list)
+    appointments: list[dict[str, Any]] = Field(default_factory=list)
+    notes: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class StartWorkflowResponse(BaseModel):
     workflow_id: str
     run_id: str
     task_queue: str = Field(default=TASK_QUEUE)
+
+
+def _temporal_settings() -> tuple[str, str]:
+    return (
+        os.environ.get(
+            "TEMPORAL_HOST", "temporal-frontend.temporal.svc.cluster.local:7233"
+        ),
+        os.environ.get("TEMPORAL_NAMESPACE", "default"),
+    )
 
 
 @app.get("/health")
@@ -37,10 +56,7 @@ async def health() -> dict[str, str]:
 
 @app.post("/api/v1/workflows/start", response_model=StartWorkflowResponse)
 async def start_workflow(body: StartWorkflowRequest) -> StartWorkflowResponse:
-    temporal_host = os.environ.get(
-        "TEMPORAL_HOST", "temporal-frontend.temporal.svc.cluster.local:7233"
-    )
-    namespace = os.environ.get("TEMPORAL_NAMESPACE", "default")
+    temporal_host, namespace = _temporal_settings()
 
     client = await Client.connect(temporal_host, namespace=namespace)
     workflow_id = f"patient-{body.patient_id}-{uuid.uuid4().hex[:8]}"
@@ -63,10 +79,7 @@ async def start_workflow(body: StartWorkflowRequest) -> StartWorkflowResponse:
 
 @app.get("/api/v1/workflows/{workflow_id}/result")
 async def workflow_result(workflow_id: str) -> dict:
-    temporal_host = os.environ.get(
-        "TEMPORAL_HOST", "temporal-frontend.temporal.svc.cluster.local:7233"
-    )
-    namespace = os.environ.get("TEMPORAL_NAMESPACE", "default")
+    temporal_host, namespace = _temporal_settings()
     client = await Client.connect(temporal_host, namespace=namespace)
     handle = client.get_workflow_handle(workflow_id)
     try:

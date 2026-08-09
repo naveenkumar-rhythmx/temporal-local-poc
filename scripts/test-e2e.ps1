@@ -79,6 +79,46 @@ if ($rawJson) {
 }
 if ($Actual -eq $Expected) { Pass "Result validation" } else { FailMsg "Result validation (expected=$Expected actual=$Actual)" }
 
+# Dashboard: ingest a clinical patient, then read the chart and RhythmX panel back
+$ClinicalId = "PAT-20001"
+try {
+  $seedBody = Get-Content (Join-Path $Root "test-data\clinical-patients.json") -Raw
+  Invoke-RestMethod -Uri "$PatientApi/patient-services/api/v1/ingest/batch" `
+    -Method POST -ContentType "application/json" -Body $seedBody | Out-Null
+} catch { }
+
+$airCount = 0
+$elapsed = 0
+while ($elapsed -lt $Timeout) {
+  try {
+    $air = Invoke-RestMethod -Uri "$PatientApi/patient-services/api/v1/patient/$ClinicalId/air-collections"
+    $airCount = $air.conditions.Count + $air.medications.Count + $air.labs.Count
+  } catch { $airCount = 0 }
+  if ($airCount -gt 0) { break }
+  Start-Sleep -Seconds 3
+  $elapsed += 3
+}
+if ($airCount -gt 0) { Pass "AIREADY collections populated" } else { FailMsg "AIREADY collections populated" }
+
+try {
+  $plist = Invoke-RestMethod -Uri "$PatientApi/patient-services/api/v1/patients"
+  if ($plist.count -gt 0) { Pass "Dashboard patient list" } else { FailMsg "Dashboard patient list" }
+} catch { FailMsg "Dashboard patient list" }
+
+try {
+  $ai = Invoke-RestMethod -Uri "$PatientApi/patient-services/api/v1/patient/$ClinicalId/rhythmx"
+  if ($ai.history_summary -and $ai.recommendations.Count -gt 0) {
+    Pass "RhythmX AI recommendations"
+  } else {
+    FailMsg "RhythmX AI recommendations"
+  }
+} catch { FailMsg "RhythmX AI recommendations" }
+
+try {
+  $page = Invoke-WebRequest -Uri "$PatientApi/patient-services/dashboard" -UseBasicParsing
+  if ($page.StatusCode -eq 200) { Pass "Dashboard page" } else { FailMsg "Dashboard page" }
+} catch { FailMsg "Dashboard page" }
+
 Write-Host ""
 if ($script:E2EFail -eq 0) {
   Write-Host "E2E RESULT: PASS"

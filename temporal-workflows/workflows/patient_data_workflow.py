@@ -57,6 +57,12 @@ class PatientDataWorkflow:
             retry_policy=ACTIVITY_RETRY,
         )
 
+        domains_written = [
+            domain
+            for domain, rows in (formatted.get("air") or {}).items()
+            if rows
+        ]
+
         audit_id = await workflow.execute_activity(
             "write_audit_record",
             {
@@ -64,7 +70,10 @@ class PatientDataWorkflow:
                 "run_id": workflow.info().run_id,
                 "patient_id": patient_input.patient_id,
                 "status": "completed",
-                "detail": {"formatted_id": formatted_id},
+                "detail": {
+                    "formatted_id": formatted_id,
+                    "domains_written": domains_written,
+                },
             },
             start_to_close_timeout=ACTIVITY_TIMEOUT,
             retry_policy=ACTIVITY_RETRY,
@@ -76,5 +85,6 @@ class PatientDataWorkflow:
             status="completed",
             formatted_patient_id=str(formatted_id),
             audit_id=int(audit_id),
+            domains_written=domains_written,
         )
         return result.to_dict()

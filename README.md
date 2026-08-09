@@ -14,6 +14,10 @@ Works on:
 
 > Synthetic data only. No real PHI. Local-only passwords. Do **not** point these scripts at AKS.
 
+After setup, open the patient dashboard at **http://127.0.0.1:30082/patient-services/dashboard** —
+a chart view of every synthetic patient with a **✦ RhythmX AI** tab that summarises the history and
+recommends next steps. See [docs/dashboard.md](docs/dashboard.md).
+
 ---
 
 ## Prerequisites
@@ -84,9 +88,40 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 | Service | URL |
 |---------|-----|
+| **Patient dashboard** | http://127.0.0.1:30082/patient-services/dashboard |
 | Temporal Web UI | http://127.0.0.1:30080 |
 | Workflow starter (OCS POC) | http://127.0.0.1:30081/health |
 | Patient ingest API | http://127.0.0.1:30082/patient-services/health |
+
+---
+
+## Dashboard + RhythmX AI
+
+`./scripts/setup.sh` seeds six synthetic patients automatically. To re-seed at any time:
+
+```bash
+./scripts/seed-data.sh          # macOS/Linux/WSL
+.\scripts\seed-data.ps1         # Windows
+```
+
+Every seeded record travels the real path — ingest API → workflow starter → Temporal →
+worker activities → PostgreSQL — so anything visible in the UI is proof the pipeline ran.
+The dashboard itself is read-only.
+
+| Tab | Content |
+|-----|---------|
+| Chart Review | Problem list, vitals, appointments, and the Temporal workflow that produced the record |
+| Medications | Active drugs with inferred drug class, plus allergies |
+| Lab Results | Latest value per test with reference ranges and H/L flags |
+| Notes | Formatter-generated summary over the full note text |
+| **✦ RhythmX AI** | History summary, risk level, and ranked recommendations with the evidence behind each one |
+
+The AI panel is a **deterministic rules engine** (`patient-data-services/app/rhythmx.py`) —
+offline, no API keys, every suggestion citing the labs/medications/conditions that triggered it.
+It covers therapy escalation, drug-safety conflicts, monitoring, and care gaps.
+Full details in [docs/dashboard.md](docs/dashboard.md).
+
+> The recommendations are teaching material over fake patients: **not medical advice, not for clinical use.**
 
 ---
 
@@ -136,9 +171,9 @@ patient-data-worker
         ↓
 validate → store_raw → format → store_formatted → audit
         ↓
-app-postgres (patient_db)
+app-postgres (patient_db: raw layer + AIREADY air_* tables)
         ↓
-Workflow Result → E2E PASS
+patient-data-services (read APIs) → Dashboard + RhythmX AI
 ```
 
 Read the full clinician journey in [docs/business-flow.md](docs/business-flow.md).
@@ -149,6 +184,7 @@ Read the full clinician journey in [docs/business-flow.md](docs/business-flow.md
 
 | Doc | Content |
 |-----|---------|
+| [docs/dashboard.md](docs/dashboard.md) | Dashboard + RhythmX AI rules engine |
 | [docs/business-flow.md](docs/business-flow.md) | Raw → AIREADY → doctors/nurses |
 | [docs/aks-discovery.md](docs/aks-discovery.md) | AKS inventory (sanitized) |
 | [docs/architecture.md](docs/architecture.md) | Mermaid diagrams |
@@ -172,6 +208,9 @@ Read the full clinician journey in [docs/business-flow.md](docs/business-flow.md
 | Separate Temporal PG vs application PG | **FACT** |
 | `PatientDataWorkflow` + `patient-processing` queue | **ASSUMPTION** (teaching) |
 | patient-data-services as ingest trigger | **ASSUMPTION** (prod uses L0 → OCS) |
+| AIREADY holds formatted, clinician-ready data | **FACT** |
+| `air_*` table shapes and the RhythmX rule set | **ASSUMPTION** (prod uses an LLM/insight service) |
+| Dashboard bundled into patient-data-services | **ASSUMPTION** (prod portal is a separate service) |
 
 ---
 

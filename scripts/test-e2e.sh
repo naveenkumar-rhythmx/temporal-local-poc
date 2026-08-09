@@ -91,6 +91,48 @@ else
   fail_msg "Result validation (expected=$EXPECTED actual=$ACTUAL)"
 fi
 
+# Dashboard: ingest a clinical patient, then read the chart and RhythmX panel back
+CLINICAL_ID="PAT-20001"
+curl -sf -X POST "$PATIENT_API/patient-services/api/v1/ingest/batch" \
+  -H 'Content-Type: application/json' \
+  --data-binary "@$ROOT/test-data/clinical-patients.json" >/dev/null 2>&1 || true
+
+ELAPSED=0
+AIR_COUNT=0
+while [[ $ELAPSED -lt $TIMEOUT ]]; do
+  AIR_COUNT=$(curl -sf "$PATIENT_API/patient-services/api/v1/patient/$CLINICAL_ID/air-collections" 2>/dev/null |
+    python3 -c 'import sys,json; d=json.load(sys.stdin); print(len(d["conditions"]) + len(d["medications"]) + len(d["labs"]))' 2>/dev/null || echo 0)
+  [[ "$AIR_COUNT" -gt 0 ]] && break
+  sleep 3
+  ELAPSED=$((ELAPSED + 3))
+done
+
+if [[ "$AIR_COUNT" -gt 0 ]]; then
+  pass "AIREADY collections populated"
+else
+  fail_msg "AIREADY collections populated"
+fi
+
+if curl -sf "$PATIENT_API/patient-services/api/v1/patients" |
+  python3 -c 'import sys,json; sys.exit(0 if json.load(sys.stdin)["count"] > 0 else 1)'; then
+  pass "Dashboard patient list"
+else
+  fail_msg "Dashboard patient list"
+fi
+
+if curl -sf "$PATIENT_API/patient-services/api/v1/patient/$CLINICAL_ID/rhythmx" |
+  python3 -c 'import sys,json; d=json.load(sys.stdin); sys.exit(0 if d["history_summary"] and d["recommendations"] else 1)'; then
+  pass "RhythmX AI recommendations"
+else
+  fail_msg "RhythmX AI recommendations"
+fi
+
+if [[ "$(curl -s -o /dev/null -w '%{http_code}' "$PATIENT_API/patient-services/dashboard")" == "200" ]]; then
+  pass "Dashboard page"
+else
+  fail_msg "Dashboard page"
+fi
+
 echo ""
 if [[ $E2E_FAIL -eq 0 ]]; then
   echo "E2E RESULT: PASS"

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MyEHR — Temporal Local POC</title>
+<style>
+  :root {
+    --bg: #eef4fb;
+    --panel: #ffffff;
+    --ink: #14243a;
+    --muted: #6b7f99;
+    --line: #dbe6f3;
+    --brand: #2f6df6;
+    --brand-soft: #e8f0ff;
+    --high: #d92d20;
+    --high-soft: #fef3f2;
+    --mod: #b54708;
+    --mod-soft: #fffaeb;
+    --low: #067647;
+    --low-soft: #ecfdf3;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 14px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  header.appbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 18px; background: var(--brand); color: #fff;
+  }
+  .logo { font-weight: 700; letter-spacing: .3px; }
+  .appbar .env {
+    font-size: 12px; background: rgba(255,255,255,.18);
+    padding: 3px 9px; border-radius: 999px;
+  }
+  .appbar .spacer { flex: 1; }
+  .appbar .warn { font-size: 12px; opacity: .95; }
+
+  .layout { display: grid; grid-template-columns: 300px 1fr; gap: 16px; padding: 16px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+  .panel-head { padding: 12px 14px; border-bottom: 1px solid var(--line); font-weight: 600; }
+  .panel-body { padding: 14px; }
+
+  #search {
+    width: 100%; padding: 8px 10px; margin-bottom: 10px;
+    border: 1px solid var(--line); border-radius: 8px; font: inherit;
+  }
+  .plist { list-style: none; margin: 0; padding: 0; max-height: 70vh; overflow: auto; }
+  .plist li {
+    padding: 10px; border: 1px solid transparent; border-radius: 8px; cursor: pointer;
+  }
+  .plist li:hover { background: #f5f9ff; }
+  .plist li.active { background: var(--brand-soft); border-color: #c7d9ff; }
+  .pname { font-weight: 600; }
+  .pmeta { color: var(--muted); font-size: 12px; }
+  .chips { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
+  .chip {
+    font-size: 11px; padding: 2px 7px; border-radius: 999px;
+    background: #f1f5fb; color: var(--muted); border: 1px solid var(--line);
+  }
+  .chip.alert { background: var(--high-soft); color: var(--high); border-color: #fecdc9; }
+
+  .banner { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .avatar {
+    width: 54px; height: 54px; border-radius: 50%; background: var(--brand-soft);
+    color: var(--brand); display: grid; place-items: center; font-weight: 700; font-size: 18px;
+  }
+  .banner h2 { margin: 0; font-size: 19px; }
+  .banner .sub { color: var(--muted); font-size: 13px; }
+
+  .tabs { display: flex; gap: 4px; padding: 0 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .tab {
+    padding: 10px 14px; border: none; background: none; font: inherit; color: var(--muted);
+    cursor: pointer; border-bottom: 2px solid transparent;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+  .tab.ai.active { color: #7c3aed; border-bottom-color: #7c3aed; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
+  tr:last-child td { border-bottom: none; }
+  .flag { font-weight: 700; }
+  .flag.H { color: var(--high); }
+  .flag.L { color: var(--mod); }
+  .flag.N { color: var(--low); }
+
+  .section-title { font-weight: 600; margin: 18px 0 8px; }
+  .section-title:first-child { margin-top: 0; }
+  .empty { color: var(--muted); font-style: italic; }
+
+  .risk {
+    display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px;
+    border-radius: 999px; font-weight: 600; font-size: 13px;
+  }
+  .risk.high { background: var(--high-soft); color: var(--high); }
+  .risk.moderate { background: var(--mod-soft); color: var(--mod); }
+  .risk.low { background: var(--low-soft); color: var(--low); }
+
+  .summary-card {
+    background: #f8fafc; border: 1px solid var(--line);
+    border-left: 3px solid #7c3aed; border-radius: 8px; padding: 12px 14px; margin: 12px 0 18px;
+  }
+  .rec {
+    border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;
+    border-left: 4px solid var(--muted);
+  }
+  .rec.high { border-left-color: var(--high); }
+  .rec.moderate { border-left-color: var(--mod); }
+  .rec.low { border-left-color: var(--low); }
+  .rec-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .rec-title { font-weight: 600; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: .3px; }
+  .badge.high { background: var(--high-soft); color: var(--high); }
+  .badge.moderate { background: var(--mod-soft); color: var(--mod); }
+  .badge.low { background: var(--low-soft); color: var(--low); }
+  .badge.cat { background: #f1f5fb; color: var(--muted); }
+  .rec p { margin: 8px 0; }
+  .rec ul { margin: 6px 0 0; padding-left: 20px; color: var(--muted); font-size: 13px; }
+  .options { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .option { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #f3effe; color: #6d28d9; }
+
+  .disclaimer {
+    margin-top: 16px; padding: 10px 12px; border-radius: 8px;
+    background: var(--mod-soft); color: var(--mod); font-size: 12px; border: 1px solid #fedf89;
+  }
+  button.primary {
+    background: var(--brand); color: #fff; border: none; padding: 9px 16px;
+    border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  button.primary:disabled { opacity: .6; cursor: default; }
+</style>
+</head>
+<body>
+<header class="appbar">
+  <span class="logo">MyEHR</span>
+  <span class="env">Temporal Local POC · kind</span>
+  <span class="spacer"></span>
+  <span class="warn">Synthetic data only — not for clinical use</span>
+</header>
+
+<div class="layout">
+  <aside class="panel">
+    <div class="panel-head">Patients</div>
+    <div class="panel-body">
+      <input id="search" type="search" placeholder="Search name or MRN…" autocomplete="off" />
+      <ul id="plist" class="plist"><li class="empty">Loading…</li></ul>
+    </div>
+  </aside>
+
+  <main class="panel">
+    <div class="panel-body" id="banner">
+      <div class="empty">Select a patient to load the chart.</div>
+    </div>
+    <div class="tabs" id="tabs" hidden>
+      <button class="tab active" data-tab="chart">Chart Review</button>
+      <button class="tab" data-tab="meds">Medications</button>
+      <button class="tab" data-tab="labs">Lab Results</button>
+      <button class="tab" data-tab="notes">Notes</button>
+      <button class="tab ai" data-tab="ai">✦ RhythmX AI</button>
+    </div>
+    <div class="panel-body" id="content"></div>
+  </main>
+</div>
+
+<script>
+const API = "/patient-services/api/v1";
+let patients = [];
+let current = null;      // { patient_id }
+let chart = null;        // air-collections payload
+let activeTab = "chart";
+
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+}[c]));
+
+const dash = (v) => (v === null || v === undefined || v === "" ? "—" : esc(v));
+
+function ageFrom(dob) {
+  if (!dob) return null;
+  const b = new Date(dob);
+  if (isNaN(b)) return null;
+  const t = new Date();
+  let a = t.getFullYear() - b.getFullYear();
+  const m = t.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && t.getDate() < b.getDate())) a--;
+  return a;
+}
+
+async function getJSON(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+/* ------------------------------------------------------------ patient list */
+async function loadPatients() {
+  const list = document.getElementById("plist");
+  try {
+    const data = await getJSON(`${API}/patients`);
+    patients = data.patients || [];
+    renderPatients();
+    if (patients.length && !current) selectPatient(patients[0].patient_id);
+  } catch (err) {
+    list.innerHTML = `<li class="empty">Could not load patients: ${esc(err.message)}</li>`;
+  }
+}
+
+function renderPatients() {
+  const term = document.getElementById("search").value.trim().toLowerCase();
+  const list = document.getElementById("plist");
+  const rows = patients.filter((p) => {
+    if (!term) return true;
+    return `${p.first_name} ${p.last_name} ${p.mrn || ""}`.toLowerCase().includes(term);
+  });
+
+  if (!rows.length) {
+    list.innerHTML = `<li class="empty">No patients found. Run ./scripts/seed-data.sh</li>`;
+    return;
+  }
+
+  list.innerHTML = rows.map((p) => {
+    const age = ageFrom(p.date_of_birth);
+    const abnormal = Number(p.abnormal_lab_count) || 0;
+    return `
+      <li data-id="${esc(p.patient_id)}" class="${current === p.patient_id ? "active" : ""}">
+        <div class="pname">${esc(p.first_name)} ${esc(p.last_name)}</div>
+        <div class="pmeta">${age !== null ? age + " y.o." : ""}${p.gender ? " · " + esc(p.gender) : ""} · MRN ${dash(p.mrn)}</div>
+        <div class="chips">
+          <span class="chip">${p.problem_count} problems</span>
+          <span class="chip">${p.medication_count} meds</span>
+          ${abnormal ? `<span class="chip alert">${abnormal} abnormal</span>` : ""}
+        </div>
+      </li>`;
+  }).join("");
+
+  list.querySelectorAll("li[data-id]").forEach((li) => {
+    li.onclick = () => selectPatient(li.dataset.id);
+  });
+}
+
+/* ------------------------------------------------------------------- chart */
+async function selectPatient(patientId) {
+  current = patientId;
+  activeTab = "chart";
+  renderPatients();
+  document.getElementById("tabs").hidden = false;
+  syncTabs();
+  document.getElementById("content").innerHTML = `<div class="empty">Loading chart…</div>`;
+
+  try {
+    chart = await getJSON(`${API}/patient/${encodeURIComponent(patientId)}/air-collections`);
+    renderBanner();
+    renderTab();
+  } catch (err) {
+    document.getElementById("content").innerHTML =
+      `<div class="empty">Could not load chart: ${esc(err.message)}</div>`;
+  }
+}
+
+function renderBanner() {
+  const p = chart.patient || {};
+  const age = ageFrom(p.date_of_birth);
+  const initials = `${(p.first_name || "?")[0]}${(p.last_name || "")[0] || ""}`.toUpperCase();
+  const allergies = (chart.allergies || []).map((a) => a.substance).join(", ") || "No known allergies";
+  document.getElementById("banner").innerHTML = `
+    <div class="banner">
+      <div class="avatar">${esc(initials)}</div>
+      <div>
+        <h2>${esc(p.first_name)} ${esc(p.last_name)}</h2>
+        <div class="sub">
+          ${age !== null ? age + " y.o." : "age unknown"}${p.gender ? " · " + esc(p.gender) : ""} ·
+          MRN ${dash(p.mrn)} · DOB ${dash(p.date_of_birth)} · pipeline status: <strong>${dash(p.status)}</strong>
+        </div>
+        <div class="sub">Allergies: ${esc(allergies)}</div>
+      </div>
+    </div>`;
+}
+
+function syncTabs() {
+  document.querySelectorAll(".tab").forEach((t) => {
+    t.classList.toggle("active", t.dataset.tab === activeTab);
+  });
+}
+
+document.getElementById("tabs").addEventListener("click", (e) => {
+  const tab = e.target.closest(".tab");
+  if (!tab) return;
+  activeTab = tab.dataset.tab;
+  syncTabs();
+  renderTab();
+});
+
+function table(headers, rows) {
+  if (!rows.length) return `<div class="empty">No data recorded.</div>`;
+  return `<table>
+    <thead><tr>${headers.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>
+  </table>`;
+}
+
+function renderTab() {
+  const el = document.getElementById("content");
+  if (activeTab === "ai") return renderAI();
+
+  if (activeTab === "chart") {
+    const conditions = table(
+      ["Code", "Problem", "Status", "Onset"],
+      (chart.conditions || []).map((c) => [dash(c.code), dash(c.display), dash(c.clinical_status), dash(c.onset_date)])
+    );
+    const vitals = table(
+      ["Date", "BP", "HR", "Temp °C", "SpO₂", "BMI"],
+      (chart.vitals || []).map((v) => [
+        dash(v.recorded_at),
+        v.systolic && v.diastolic ? `${v.systolic}/${v.diastolic}` : "—",
+        dash(v.heart_rate), dash(v.temp_c), dash(v.spo2), dash(v.bmi),
+      ])
+    );
+    const appts = table(
+      ["Date", "Type", "Provider", "Status"],
+      (chart.appointments || []).map((a) => [dash(a.scheduled_at), dash(a.appt_type), dash(a.provider), dash(a.status)])
+    );
+    const audit = table(
+      ["Workflow", "Status", "Processed at"],
+      (chart.workflow_audit || []).map((w) => [`<code>${dash(w.workflow_id)}</code>`, dash(w.status), dash(w.created_at)])
+    );
+    el.innerHTML = `
+      <div class="section-title">Active &amp; historical problems</div>${conditions}
+      <div class="section-title">Vitals</div>${vitals}
+      <div class="section-title">Appointments</div>${appts}
+      <div class="section-title">Temporal workflow history</div>${audit}`;
+    return;
+  }
+
+  if (activeTab === "meds") {
+    el.innerHTML = `
+      <div class="section-title">Medications</div>
+      ${table(
+        ["Medication", "Class", "Dose", "Route", "Frequency", "Status", "Started"],
+        (chart.medications || []).map((m) => [
+          `<strong>${dash(m.name)}</strong>`, dash(m.drug_class), dash(m.dose),
+          dash(m.route), dash(m.frequency), dash(m.status), dash(m.start_date),
+        ])
+      )}
+      <div class="section-title">Allergies</div>
+      ${table(
+        ["Substance", "Reaction", "Severity"],
+        (chart.allergies || []).map((a) => [dash(a.substance), dash(a.reaction), dash(a.severity)])
+      )}`;
+    return;
+  }
+
+  if (activeTab === "labs") {
+    el.innerHTML = `
+      <div class="section-title">Latest result per test</div>
+      ${table(
+        ["Test", "Value", "Unit", "Reference", "Flag", "Collected"],
+        (chart.latest_labs || []).map((l) => [
+          dash(l.display), `<strong>${dash(l.value_num)}</strong>`, dash(l.unit),
+          l.ref_low !== null && l.ref_high !== null ? `${l.ref_low}–${l.ref_high}` : "—",
+          `<span class="flag ${esc(l.abnormal_flag || "")}">${dash(l.abnormal_flag)}</span>`,
+          dash(l.collected_at),
+        ])
+      )}
+      <div class="section-title">Full lab history</div>
+      ${table(
+        ["Test", "Value", "Unit", "Flag", "Collected"],
+        (chart.labs || []).map((l) => [
+          dash(l.display), dash(l.value_num), dash(l.unit),
+          `<span class="flag ${esc(l.abnormal_flag || "")}">${dash(l.abnormal_flag)}</span>`,
+          dash(l.collected_at),
+        ])
+      )}`;
+    return;
+  }
+
+  if (activeTab === "notes") {
+    const notes = chart.notes || [];
+    el.innerHTML = notes.length
+      ? notes.map((n) => `
+          <div class="rec">
+            <div class="rec-head">
+              <span class="rec-title">${dash(n.note_type)}</span>
+              <span class="badge cat">${dash(n.note_date)}</span>
+              <span class="badge cat">${dash(n.author)}</span>
+            </div>
+            <p><strong>Formatter summary:</strong> ${dash(n.summary)}</p>
+            <details><summary>Full note text</summary><p>${dash(n.full_text)}</p></details>
+          </div>`).join("")
+      : `<div class="empty">No clinical notes recorded.</div>`;
+  }
+}
+
+/* -------------------------------------------------------------- RhythmX AI */
+async function renderAI() {
+  const el = document.getElementById("content");
+  el.innerHTML = `<div class="empty">Analyzing history and current problems…</div>`;
+  try {
+    const ai = await getJSON(`${API}/patient/${encodeURIComponent(current)}/rhythmx`);
+    const recs = ai.recommendations || [];
+    el.innerHTML = `
+      <div class="rec-head" style="justify-content:space-between">
+        <div class="section-title" style="margin:0">Clinical summary &amp; recommendations</div>
+        <span class="risk ${esc(ai.risk_level)}">Risk: ${esc(ai.risk_level)}</span>
+      </div>
+      <div class="summary-card">
+        <div><strong>History summary</strong></div>
+        <p style="margin:6px 0 0">${esc(ai.history_summary)}</p>
+      </div>
+      <div class="section-title">
+        Recommendations
+        <span class="badge cat">${recs.length} total</span>
+        <span class="badge high">${ai.counts.high} high</span>
+        <span class="badge moderate">${ai.counts.moderate} moderate</span>
+        <span class="badge low">${ai.counts.low} low</span>
+      </div>
+      ${recs.length ? recs.map((r) => `
+        <div class="rec ${esc(r.severity)}">
+          <div class="rec-head">
+            <span class="rec-title">${esc(r.title)}</span>
+            <span class="badge ${esc(r.severity)}">${esc(r.severity)}</span>
+            <span class="badge cat">${esc(r.category)}</span>
+          </div>
+          <p>${esc(r.detail)}</p>
+          ${r.suggested_options.length ? `<div class="options">${r.suggested_options.map((o) => `<span class="option">${esc(o)}</span>`).join("")}</div>` : ""}
+          ${r.evidence.length ? `<ul>${r.evidence.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>` : ""}
+        </div>`).join("") : `<div class="empty">No recommendations triggered for this patient.</div>`}
+      <div class="disclaimer">
+        <strong>${esc(ai.engine)}</strong> · sources: ${(ai.data_sources || []).join(", ")}<br />
+        ${esc(ai.disclaimer)}
+      </div>`;
+  } catch (err) {
+    el.innerHTML = `<div class="empty">RhythmX AI unavailable: ${esc(err.message)}</div>`;
+  }
+}
+
+document.getElementById("search").addEventListener("input", renderPatients);
+loadPatients();
+</script>
+</body>
+</html>

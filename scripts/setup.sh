@@ -28,7 +28,9 @@ echo "Building and loading images..."
 "$ROOT/scripts/build.sh"
 
 echo "Deploying application PostgreSQL..."
-kubectl apply -f postgres/configmap-init.yaml
+kubectl create configmap app-postgres-init \
+  --from-file=init.sql=postgres/init.sql \
+  -n patient-data-services --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -f postgres/pvc.yaml
 kubectl apply -f postgres/deployment.yaml
 kubectl apply -f postgres/service.yaml
@@ -71,7 +73,22 @@ kubectl wait --for=condition=available deployment/orchestration-core-services -n
 kubectl wait --for=condition=available deployment/patient-data-worker -n temporal-workers --timeout=300s
 kubectl wait --for=condition=available deployment/patient-data-services -n patient-data-services --timeout=300s
 
+echo "Applying application schema (idempotent, also upgrades existing volumes)..."
+"$ROOT/scripts/apply-schema.sh"
+
+echo "Restarting services so they pick up config/schema changes..."
+kubectl rollout restart deployment/patient-data-services -n patient-data-services
+kubectl rollout restart deployment/patient-data-worker -n temporal-workers
+kubectl rollout status deployment/patient-data-services -n patient-data-services --timeout=300s
+kubectl rollout status deployment/patient-data-worker -n temporal-workers --timeout=300s
+
+echo "Seeding synthetic patients through the Temporal pipeline..."
+"$ROOT/scripts/seed-data.sh" || echo "Seeding skipped/failed — run ./scripts/seed-data.sh manually."
+
 echo "Running verification..."
 "$ROOT/scripts/verify.sh"
 
+echo
 echo "Setup complete."
+echo "  Dashboard    : http://127.0.0.1:30082/patient-services/dashboard"
+echo "  Temporal UI  : http://127.0.0.1:30080"

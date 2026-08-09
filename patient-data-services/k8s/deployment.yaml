@@ -42,6 +42,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: patient-data-services-config
+            - secretRef:
+                name: patient-data-services-secret
           readinessProbe:
             httpGet:
               path: /patient-services/health
@@ -65,3 +67,13 @@ data:
   LOG_LEVEL: INFO
   ROOT_PATH_PREFIX: /patient-services
   WORKFLOW_STARTER_URL: http://orchestration-core-services.temporal-workflows.svc.cluster.local:8000
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: patient-data-services-secret
+  namespace: patient-data-services
+type: Opaque
+stringData:
+  # LOCAL ONLY — kind cluster credentials, never reuse outside this prototype
+  DATABASE_URL: postgresql://patient_app:local-only-change-me@app-postgres.patient-data-services.svc.cluster.local:5432/patient_db

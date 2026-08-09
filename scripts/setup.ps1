@@ -28,7 +28,9 @@ Write-Host "Building and loading images..."
 & "$Root\scripts\build.ps1"
 
 Write-Host "Deploying application PostgreSQL..."
-kubectl apply -f postgres/configmap-init.yaml
+kubectl create configmap app-postgres-init `
+  --from-file=init.sql=postgres/init.sql `
+  -n patient-data-services --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -f postgres/pvc.yaml
 kubectl apply -f postgres/deployment.yaml
 kubectl apply -f postgres/service.yaml
@@ -76,7 +78,22 @@ kubectl wait --for=condition=available deployment/orchestration-core-services -n
 kubectl wait --for=condition=available deployment/patient-data-worker -n temporal-workers --timeout=300s
 kubectl wait --for=condition=available deployment/patient-data-services -n patient-data-services --timeout=300s
 
+Write-Host "Applying application schema (idempotent, also upgrades existing volumes)..."
+& "$Root\scripts\apply-schema.ps1"
+
+Write-Host "Restarting services so they pick up config/schema changes..."
+kubectl rollout restart deployment/patient-data-services -n patient-data-services
+kubectl rollout restart deployment/patient-data-worker -n temporal-workers
+kubectl rollout status deployment/patient-data-services -n patient-data-services --timeout=300s
+kubectl rollout status deployment/patient-data-worker -n temporal-workers --timeout=300s
+
+Write-Host "Seeding synthetic patients through the Temporal pipeline..."
+try { & "$Root\scripts\seed-data.ps1" } catch { Write-Host "Seeding skipped/failed - run .\scripts\seed-data.ps1 manually." }
+
 Write-Host "Running verification..."
 & "$Root\scripts\verify.ps1"
 
+Write-Host ""
 Write-Host "Setup complete."
+Write-Host "  Dashboard    : http://127.0.0.1:30082/patient-services/dashboard"
+Write-Host "  Temporal UI  : http://127.0.0.1:30080"
