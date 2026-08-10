@@ -1,0 +1,84 @@
+[
+  {
+    "patient_id": "PAT-30001",
+    "mrn": "MN30001",
+    "first_name": "Rahil",
+    "last_name": "Sharma",
+    "dob": "1988-03-14",
+    "gender": "male",
+    "encounter_id": "ENC-30001",
+    "diagnosis": "Type 2 diabetes mellitus with hypertension — today's clinic visit",
+    "source": "local-demo-today",
+    "conditions": [
+      { "code": "E11.9", "display": "Type 2 diabetes mellitus without complications", "clinical_status": "active", "onset_date": "2019-06-10" },
+      { "code": "I10", "display": "Essential hypertension", "clinical_status": "active", "onset_date": "2021-01-20" }
+    ],
+    "medications": [
+      { "name": "Metformin", "dose": "500 mg", "route": "oral", "frequency": "BID", "status": "active", "start_date": "2019-07-01" },
+      { "name": "Amlodipine", "dose": "5 mg", "route": "oral", "frequency": "daily", "status": "active", "start_date": "2021-02-01" }
+    ],
+    "allergies": [
+      { "substance": "Sulfa", "reaction": "Rash", "severity": "moderate" }
+    ],
+    "labs": [
+      { "code": "4548-4", "display": "Hemoglobin A1c", "value": 7.8, "unit": "%", "ref_low": 4.0, "ref_high": 5.7, "collected_at": "2026-08-10" },
+      { "code": "13457-7", "display": "LDL Cholesterol", "value": 118, "unit": "mg/dL", "ref_low": 0, "ref_high": 100, "collected_at": "2026-08-10" },
+      { "code": "48642-3", "display": "eGFR", "value": 88, "unit": "mL/min/1.73m2", "ref_low": 60, "ref_high": 120, "collected_at": "2026-08-10" }
+    ],
+    "vitals": [
+      { "systolic": 144, "diastolic": 92, "heart_rate": 78, "temp_c": 36.7, "spo2": 98, "bmi": 28.6, "recorded_at": "2026-08-10" }
+    ],
+    "appointments": [
+      { "encounter_id": "ENC-30001", "appt_type": "Primary Care Follow-up", "provider": "Dr. A. Whitfield", "scheduled_at": "2026-08-10", "status": "booked" }
+    ],
+    "notes": [
+      {
+        "encounter_id": "ENC-30001",
+        "note_type": "Progress Note",
+        "author": "Dr. A. Whitfield",
+        "note_date": "2026-08-10",
+        "text": "Rahil presents today for scheduled diabetes and hypertension follow-up. Fasting sugars at home mostly 140-170 mg/dL. Blood pressure elevated on check-in. Labs drawn this morning show A1c 7.8% and LDL above target. Plan: review adherence, consider statin, and tighten BP control."
+      }
+    ]
+  },
+  {
+    "patient_id": "PAT-30002",
+    "mrn": "MN30002",
+    "first_name": "Naveen",
+    "last_name": "Kumar",
+    "dob": "1992-11-08",
+    "gender": "male",
+    "encounter_id": "ENC-30002",
+    "diagnosis": "Asthma flare with seasonal allergy — today's sick visit",
+    "source": "local-demo-today",
+    "conditions": [
+      { "code": "J45.909", "display": "Unspecified asthma, uncomplicated", "clinical_status": "active", "onset_date": "2008-04-12" },
+      { "code": "J30.9", "display": "Allergic rhinitis, unspecified", "clinical_status": "active", "onset_date": "2015-09-01" }
+    ],
+    "medications": [
+      { "name": "Albuterol", "dose": "90 mcg", "route": "inhalation", "frequency": "PRN", "status": "active", "start_date": "2008-05-01" },
+      { "name": "Amoxicillin", "dose": "500 mg", "route": "oral", "frequency": "TID", "status": "active", "start_date": "2026-08-10" }
+    ],
+    "allergies": [
+      { "substance": "Penicillin", "reaction": "Urticaria", "severity": "severe" }
+    ],
+    "labs": [
+      { "code": "718-7", "display": "Hemoglobin", "value": 14.2, "unit": "g/dL", "ref_low": 13.0, "ref_high": 17.0, "collected_at": "2026-08-10" }
+    ],
+    "vitals": [
+      { "systolic": 122, "diastolic": 76, "heart_rate": 92, "temp_c": 37.6, "spo2": 94, "bmi": 24.1, "recorded_at": "2026-08-10" }
+    ],
+    "appointments": [
+      { "encounter_id": "ENC-30002", "appt_type": "Acute Sick Visit", "provider": "Dr. L. Bennett", "scheduled_at": "2026-08-10", "status": "booked" }
+    ],
+    "notes": [
+      {
+        "encounter_id": "ENC-30002",
+        "note_type": "Progress Note",
+        "author": "Dr. L. Bennett",
+        "note_date": "2026-08-10",
+        "text": "Naveen presents today with three days of cough, wheeze, and low-grade fever. Uses rescue inhaler several times daily with no controller inhaler on the list. Empiric amoxicillin started this morning; chart also lists a severe penicillin allergy — reconcile before continuing antibiotics. SpO2 94% on room air at check-in."
+      }
+    ]
+  }
+]

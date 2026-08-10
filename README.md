@@ -185,6 +185,7 @@ Read the full clinician journey in [docs/business-flow.md](docs/business-flow.md
 | Doc | Content |
 |-----|---------|
 | [docs/dashboard.md](docs/dashboard.md) | Dashboard + RhythmX AI rules engine |
+| [docs/today-5-patients-steps.md](docs/today-5-patients-steps.md) | E2E steps: 5 today-appointment patients on any laptop |
 | [docs/business-flow.md](docs/business-flow.md) | Raw → AIREADY → doctors/nurses |
 | [docs/aks-discovery.md](docs/aks-discovery.md) | AKS inventory (sanitized) |
 | [docs/architecture.md](docs/architecture.md) | Mermaid diagrams |
